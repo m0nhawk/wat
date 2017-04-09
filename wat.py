@@ -194,7 +194,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.dataModel = PandasModel()
         self.dataView.setModel(self.dataModel)
 
-        self.open_folder_path = os.path.expanduser('~/Documents/me/science/grant_data/jupiter/jupiter_converted')
+        self.open_folder_path = os.path.expanduser('~')
 
     def openDataFile(self):
         filename, ok = QFileDialog.getOpenFileName(None, 'Open file',
@@ -202,6 +202,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
                                                    "Text files (*.txt *.asc *.dat *.csv)")
 
         self.open_folder_path = os.path.dirname(filename)
+        self.open_file_name = os.path.basename(filename)
 
         if ok:
             bgsm_c1 = pd.read_csv(filename, sep=None, engine='python')
@@ -232,6 +233,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             self.listData.addItems(self.data.columns)
 
             self.listData.setCurrentIndex(1)
+
+            self.currentFile.setText(self.open_file_name)
 
     def plotData(self):
         plt = DataPlotWindow(self.data, self.time_axis, self.data_axis, parent=self)
