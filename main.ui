@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>380</height>
+    <width>409</width>
+    <height>482</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,9 +15,16 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
-    <item row="0" column="0">
+    <item row="1" column="0">
      <layout class="QGridLayout" name="gridLayout">
-      <item row="2" column="0">
+      <item row="1" column="1">
+       <widget class="QComboBox" name="listTime">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
        <widget class="QPushButton" name="buttonPlotData">
         <property name="enabled">
          <bool>false</bool>
@@ -27,45 +34,14 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="buttonPlotWavelet">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="text">
-         <string>Plot Wavelet</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
+      <item row="1" column="2">
        <widget class="QComboBox" name="listData">
         <property name="enabled">
          <bool>false</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QComboBox" name="listTime">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0" colspan="2">
-       <widget class="QTableView" name="dataView">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="currentFile">
-        <property name="text">
-         <string>No File</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
+      <item row="0" column="3">
        <widget class="QPushButton" name="buttonOpenDataFile">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -78,6 +54,52 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QLabel" name="currentFile">
+        <property name="text">
+         <string>No File</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1" colspan="3">
+       <widget class="QTableView" name="dataView">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="3">
+       <widget class="QPushButton" name="buttonPlotWavelet">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Plot Wavelet</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QComboBox" name="chemical">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <item>
+         <property name="text">
+          <string>H+ (1)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>He+ (4)</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>O+ (16)</string>
+         </property>
+        </item>
+       </widget>
+      </item>
      </layout>
     </item>
    </layout>
@@ -87,7 +109,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>502</width>
+     <width>409</width>
      <height>21</height>
     </rect>
    </property>

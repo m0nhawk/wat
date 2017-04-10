@@ -12,7 +12,8 @@ import pyqtgraph as pg
 import pyqtgraph.widgets.MatplotlibWidget as mpw
 import scipy
 import wavelets
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QWidget, QGridLayout)
+from PyQt5.QtCore import QRect, QPoint, QItemSelectionModel, QEvent
+from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QWidget, QGridLayout, QAbstractItemView)
 
 import ui_main
 from models import PandasModel
@@ -20,7 +21,7 @@ from physics import cyclotron_frequency
 
 
 class DataPlotWindow(QMainWindow):
-    def __init__(self, data, timeAxis, dataAxis, parent=None):
+    def __init__(self, data, time_axis, data_axis, parent=None):
         super(DataPlotWindow, self).__init__(parent)
 
         w = QWidget()
@@ -28,27 +29,29 @@ class DataPlotWindow(QMainWindow):
         layout = QGridLayout()
         w.setLayout(layout)
 
-        class TimeAxisItem(pg.AxisItem):
-            def tickStrings(self, values, scale, spacing):
-                return [datetime.datetime.fromtimestamp(value + 100000).strftime('%Y-%m-%d %H:%M:%S') for value in
-                        values]
-
-        date_axis = TimeAxisItem('bottom')
-
-        pg.setConfigOption('background', 'w')
-        pg.setConfigOption('foreground', 'k')
-
-        plot = pg.PlotWidget(axisItems={'bottom': date_axis})
+        plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
 
         layout.addWidget(plot)
 
-        plot.plot(x=data[timeAxis].values, y=data[dataAxis].values)
+        time_slice = pd.to_datetime(data[time_axis], unit='s')
+        b_slice = data[data_axis].values
+
+        ax1 = plot.getFigure().add_subplot(111)
+
+        ax1.plot(time_slice, b_slice)
+        ax1.xaxis.set_major_locator(mdates.SecondLocator(interval=960))
+        ax1.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax1.set_xlim([time_slice.iloc[0], time_slice.iloc[-1]])
+        ax1.set_xlabel('time, UT')
+        ax1.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
+        plot.draw()
 
         self.setCentralWidget(w)
 
 
 class WaveletPlotWindow(QMainWindow):
-    def __init__(self, data, time_axis, data_axis, parent=None):
+    def __init__(self, data, time_axis, data_axis, element=1, parent=None):
         super(WaveletPlotWindow, self).__init__(parent)
 
         w = QWidget()
@@ -63,7 +66,6 @@ class WaveletPlotWindow(QMainWindow):
         title = ''
         xlabel = ''
         log = False
-        element = 16
 
         time_slice = pd.to_datetime(data[time_axis], unit='s')
         b_slice = data[data_axis].values
@@ -194,7 +196,12 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.dataModel = PandasModel()
         self.dataView.setModel(self.dataModel)
 
-        self.open_folder_path = os.path.expanduser('~')
+        self.dataView.setSelectionMode(QAbstractItemView.ContiguousSelection)
+        self.dataView.setSelectionBehavior(QAbstractItemView.SelectRows)
+
+        self.dataView.verticalHeader().hide()
+
+        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\jupiter\converted')
 
     def openDataFile(self):
         filename, ok = QFileDialog.getOpenFileName(None, 'Open file',
@@ -227,6 +234,9 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             if not self.dataView.isEnabled():
                 self.dataView.setEnabled(True)
 
+            if not self.chemical.isEnabled():
+                self.chemical.setEnabled(True)
+
             self.listTime.clear()
             self.listData.clear()
             self.listTime.addItems(self.data.columns)
@@ -241,7 +251,18 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         plt.show()
 
     def plotWavelet(self):
-        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, parent=self)
+        element = self.chemical.currentIndex()
+
+        if element == 0:
+            element = 1
+        elif element == 1:
+            element = 4
+        elif element == 2:
+            element = 16
+        else:
+            element = 1
+
+        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, element=element, parent=self)
         plt.show()
 
     def listTimeChanged(self, i):
