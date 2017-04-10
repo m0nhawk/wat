@@ -12,7 +12,6 @@ import pyqtgraph as pg
 import pyqtgraph.widgets.MatplotlibWidget as mpw
 import scipy
 import wavelets
-from PyQt5.QtCore import QRect, QPoint, QItemSelectionModel, QEvent
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QWidget, QGridLayout, QAbstractItemView)
 
 import ui_main
@@ -71,8 +70,7 @@ class WaveletPlotWindow(QMainWindow):
         b_slice = data[data_axis].values
 
         x = b_slice
-        dt = time_slice.iloc[1] - time_slice.iloc[0]
-        dt = float('.'.join([str(dt.seconds), str(dt.microseconds)]))
+        dt = (time_slice.iloc[1] - time_slice.iloc[0]).total_seconds()
         wa = wavelets.WaveletAnalysis(x, dt=dt, dj=0.125, wavelet=wavelets.Morlet(), unbias=True)
         power = wa.wavelet_power
         scales = wa.scales
