@@ -50,7 +50,7 @@ class DataPlotWindow(QMainWindow):
 
 
 class WaveletPlotWindow(QMainWindow):
-    def __init__(self, data, time_axis, data_axis, charge=1, element=1, parent=None):
+    def __init__(self, data, time_axis, data_axis, charge=1, element=1, date_format='', parent=None):
         super(WaveletPlotWindow, self).__init__(parent)
 
         w = QWidget()
@@ -66,7 +66,11 @@ class WaveletPlotWindow(QMainWindow):
         xlabel = ''
         log = False
 
-        time = pd.to_datetime(data[time_axis], unit='s')
+        if date_format == '':
+            time = pd.to_datetime(data[time_axis], unit='s')
+        else:
+            time = pd.to_datetime(data[time_axis], format=self.dateFormat.text()).apply(lambda x: x.timestamp())
+
         magnetic_field = data[data_axis].values
 
         dt = (time.iloc[1] - time.iloc[0]).total_seconds()
@@ -198,7 +202,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
         self.dataView.verticalHeader().hide()
 
-        self.open_folder_path = os.path.expanduser(r'~')
+        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\jupiter\converted')
 
     def openDataFile(self):
         filename, ok = QFileDialog.getOpenFileName(None, 'Open file',
@@ -209,10 +213,9 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.open_file_name = os.path.basename(filename)
 
         if ok:
-            bgsm_c1 = pd.read_csv(filename, sep=None, engine='python')
-            # bgsm_c1.ix[:, 0] = pd.to_datetime(bgsm_c1.ix[:, 0], infer_datetime_format=True).apply(lambda x: x.timestamp())
+            self.data = pd.read_csv(filename, sep=None, engine='python')
+            self.data.fillna(0, inplace=True)
 
-            self.data = bgsm_c1
             self.dataModel = PandasModel(self.data)
             self.dataView.setModel(self.dataModel)
 
@@ -267,9 +270,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         else:
             element = 1
 
-        print(f'{element} {charge}')
-
-        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, charge=charge, element=element, parent=self)
+        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, charge=charge, element=element, date_format=self.dateFormat.text(), parent=self)
         plt.show()
 
     def listTimeChanged(self, i):

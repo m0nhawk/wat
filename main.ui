@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>409</width>
-    <height>482</height>
+    <width>411</width>
+    <height>469</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,7 +78,7 @@
         </property>
        </widget>
       </item>
-      <item row="5" column="2">
+      <item row="6" column="2">
        <widget class="QLineEdit" name="chemical">
         <property name="enabled">
          <bool>true</bool>
@@ -89,8 +89,21 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="text">
+         <string>H+</string>
+        </property>
         <property name="maxLength">
          <number>250</number>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="2">
+       <widget class="QLineEdit" name="dateFormat">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
        </widget>
       </item>
@@ -103,7 +116,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>409</width>
+     <width>411</width>
      <height>21</height>
     </rect>
    </property>
