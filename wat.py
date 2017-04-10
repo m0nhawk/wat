@@ -198,7 +198,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
         self.dataView.verticalHeader().hide()
 
-        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\jupiter\converted')
+        self.open_folder_path = os.path.expanduser(r'~')
 
     def openDataFile(self):
         filename, ok = QFileDialog.getOpenFileName(None, 'Open file',
