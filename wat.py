@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import sys
 
 import matplotlib.colors as colors
@@ -50,7 +51,7 @@ class DataPlotWindow(QMainWindow):
 
 
 class WaveletPlotWindow(QMainWindow):
-    def __init__(self, data, time_axis, data_axis, charge=1, element=1, date_format='', parent=None):
+    def __init__(self, data, time_axis, data_axis, charge=1, mass=1, date_format='', parent=None):
         super(WaveletPlotWindow, self).__init__(parent)
 
         w = QWidget()
@@ -111,7 +112,7 @@ class WaveletPlotWindow(QMainWindow):
         C, S = wa.coi
         interpolated_coi = scipy.interpolate.interp1d(C, S, bounds_error=False)
 
-        cyclotron_period = 1 / cyclotron_frequency(magnetic_field, charge, element)
+        cyclotron_period = 1 / cyclotron_frequency(magnetic_field, charge, mass)
         cyclotron_period[cyclotron_period > interpolated_coi(t)] = np.nan
 
         def find_nearest_idx(array, value):
@@ -143,7 +144,8 @@ class WaveletPlotWindow(QMainWindow):
 
         ax_wavelet = plot.getFigure().add_subplot(grid[2])
 
-        s = ax_wavelet.contourf(T, S, power, np.arange(vmin, vmax, 0.001), locator=locator, norm=norm, vmin=vmin, vmax=vmax)
+        s = ax_wavelet.contourf(T, S, power, np.arange(vmin, vmax, 0.001), locator=locator, norm=norm, vmin=vmin,
+                                vmax=vmax)
         ax_wavelet.set_xlabel('time, UT')
 
         def wavelet_date_formatter(x, pos):
@@ -255,22 +257,15 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
         charge = element.count("+")
 
-        if "He" in element:
-            element = 4
-        elif "H" in element:
-            element = 1
-        elif "O" in element:
-            element = 16
-        elif "S" in element:
-            element = 32
-        elif "C" in element:
-            element = 12
-        elif "N" in element:
-            element = 14
-        else:
-            element = 1
+        element = re.findall('([A-Z][a-z]?)+', element)[0]
 
-        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, charge=charge, element=element, date_format=self.dateFormat.text(), parent=self)
+        elements = {'H': 1, 'He': 4, 'Li': 7, 'Be': 9, 'B': 11, 'C': 12, 'N': 14, 'O': 16, 'F': 19, 'Ne': 20, 'Na': 23,
+                    'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40, 'Ca': 40}
+
+        mass = elements[element]
+
+        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, charge=charge, mass=mass,
+                                date_format=self.dateFormat.text(), parent=self)
         plt.show()
 
     def listTimeChanged(self, i):
