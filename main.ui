@@ -90,7 +90,7 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>H+</string>
+         <string>S+++,O++,H+</string>
         </property>
         <property name="maxLength">
          <number>250</number>
