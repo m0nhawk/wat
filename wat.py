@@ -24,7 +24,7 @@ class PlotDataWindow(QDialog):
     def __init__(self, data, time_axis, data_axis, parent=None):
         super(PlotDataWindow, self).__init__(parent)
 
-        self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
+        self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 2.0))
         self.layout = QGridLayout()
         self.layout.addWidget(self.plot)
         self.setLayout(self.layout)
@@ -37,14 +37,17 @@ class PlotDataWindow(QDialog):
 
         ax = self.plot.getFigure().add_subplot(111)
         ax.plot(time_slice, b_slice)
+
+        ax.set_xlabel('time, UT')
+        ax.set_xlim([time_slice.iloc[0], time_slice.iloc[-1]])
         ax.xaxis.set_major_locator(mdates.SecondLocator(interval=960))
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-        ax.set_xlim([time_slice.iloc[0], time_slice.iloc[-1]])
-        ax.set_xlabel('time, UT')
+
+        ax.set_ylable(data_axis)
         ax.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
         ax.grid(True)
 
-        self.plot.draw()
+        self.plot.getFigure().set_tight_layout(True)
 
 
 class WaveletPlotWindow(QDialog):
@@ -87,17 +90,17 @@ class WaveletPlotWindow(QDialog):
     def plot_wavelet(self, data, time_axis, data_axis, title='', elements=None, date_format=''):
         xlabel = data_axis
 
-        if date_format == '':
-            self.time = pd.to_datetime(data[time_axis], unit='s')
-            self.wavelet_time = self.time.apply(lambda x: x.tz_localize('utc').timestamp())
-        else:
-            self.time = pd.to_datetime(data[time_axis], format=date_format).apply(
-                lambda x: x.tz_localize('utc').timestamp())
-
         magnetic_field = data[data_axis].values
 
-        dt = self.wavelet_time.iloc[1] - self.wavelet_time.iloc[0]
-        wa = wavelets.WaveletAnalysis(data=magnetic_field, time=self.wavelet_time.values, dt=dt, dj=0.125,
+        if date_format == '':
+            self.time = pd.to_datetime(data[time_axis], unit='s')
+        else:
+            self.time = pd.to_datetime(data[time_axis], format=date_format)
+
+        wavelet_time = self.time.apply(lambda x: x.tz_localize('utc').timestamp()).values
+
+        dt = wavelet_time[1] - wavelet_time[0]
+        wa = wavelets.WaveletAnalysis(data=magnetic_field, time=wavelet_time, dt=dt, dj=0.125,
                                       wavelet=wavelets.Morlet(), unbias=True)
         power = wa.wavelet_power
         t, scales = wa.time, wa.scales
@@ -108,22 +111,23 @@ class WaveletPlotWindow(QDialog):
 
         def date_formatter(x, pos):
             return pd.to_datetime(x, unit='s').strftime('%H:%M')
+
         formatter = ticker.FuncFormatter(date_formatter)
 
         ax_magnetic = self.plot.getFigure().add_subplot(grid[0])
+        ax_magnetic.plot(t, magnetic_field)
 
         ax_magnetic.set_title(title)
-        ax_magnetic.plot(t, magnetic_field)
+
+        ax_magnetic.set_xlabel('time, UT')
+        ax_magnetic.set_xlim([t[0], t[-1]])
         ax_magnetic.xaxis.set_major_locator(ticker.AutoLocator())
         ax_magnetic.xaxis.set_major_formatter(formatter)
-        ax_magnetic.set_xlim([self.wavelet_time.iloc[0], self.wavelet_time.iloc[-1]])
-        ax_magnetic.set_xlabel('time, UT')
-        ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
-        ax_magnetic.set_ylabel(xlabel)
-        ax_magnetic.grid(True)
 
-        C, S = wa.coi
-        scales = np.array([s for s in scales if s < S.max()])
+        ax_magnetic.set_ylabel(xlabel)
+        ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
+        ax_magnetic.grid(True)
 
         vmin = power.min()
         vmax = power.max()
@@ -132,6 +136,12 @@ class WaveletPlotWindow(QDialog):
         norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=False)
 
         C, S = wa.coi
+        C = np.insert(C, [0, C.size], [t.min(), t.max()])
+        S = np.insert(S, [0, S.size], [0, 0])
+
+        scales = np.array([s for s in scales if s < S.max()])
+        power = power[0:len(scales)]
+
         interpolated_coi = scipy.interpolate.interp1d(C, S, bounds_error=False)
 
         def find_nearest_idx(array, value):
@@ -157,54 +167,57 @@ class WaveletPlotWindow(QDialog):
 
             self.cyclotron_power[name] = cyclotron_power
 
-        power = power[0:len(scales)]
-        T, S = np.meshgrid(t, scales)
-
         ax_cyclotron = self.plot.getFigure().add_subplot(grid[1])
+        ax_cyclotron.semilogy(t, self.cyclotron_power[elements[0]['name']])
 
         ax_cyclotron.set_title('Power on cyclotron frequency')
-        ax_cyclotron.semilogy(t, self.cyclotron_power[elements[0]['name']])
+
+        ax_cyclotron.set_xlabel('time, UT')
+        ax_cyclotron.set_xlim([t[0], t[-1]])
         ax_cyclotron.xaxis.set_major_locator(ticker.AutoLocator())
         ax_cyclotron.xaxis.set_major_formatter(formatter)
-        ax_cyclotron.set_xlim([self.wavelet_time.iloc[0], self.wavelet_time.iloc[-1]])
-        ax_cyclotron.set_xlabel('time, UT')
-        ax_cyclotron.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
         ax_cyclotron.set_ylabel('Power, (nT)^2')
+        ax_cyclotron.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
         ax_cyclotron.grid(True)
+
+        T, S = np.meshgrid(t, scales)
 
         ax_wavelet = self.plot.getFigure().add_subplot(grid[2])
 
-        s = ax_wavelet.contourf(T, S, power, np.arange(vmin, vmax, 0.001), locator=locator, norm=norm, vmin=vmin,
-                                vmax=vmax)
-        ax_wavelet.set_xlabel('time, UT')
-
-        ax_wavelet.set_xlim([self.wavelet_time.iloc[0], self.wavelet_time.iloc[-1]])
-        ax_wavelet.xaxis.set_major_locator(ticker.AutoLocator())
-        ax_wavelet.xaxis.set_major_formatter(formatter)
-        ax_wavelet.grid(b=True, which='major', color='k', linestyle='-', alpha=.2, zorder=3)
-
-        C, S = wa.coi
-
-        ax_wavelet.set_ylabel('scale, s')
-        ax_wavelet.set_yscale('log')
-        ax_wavelet.set_ylim(scales.max(), scales.min())
-        ax_wavelet.yaxis.set_major_formatter(ticker.ScalarFormatter())
-        ax_wavelet.fill_between(x=C, y1=S, y2=scales.max(), color='gray', alpha=0.3)
-
-        ax_wavelet.plot(t, self.cyclotron_period[elements[0]['name']], 'r-', linewidth=1)
+        s = ax_wavelet.contourf(T, S, power, np.arange(vmin, vmax, 0.001), locator=locator, norm=norm)
 
         cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.2, extend='both')
         cb.set_label('Wavelet power spectrum, (nT)^2')
         cb.set_clim(vmin=vmin, vmax=vmax)
 
+        ax_wavelet.set_xlabel('time, UT')
+        ax_wavelet.set_xlim([t[0], t[-1]])
+        ax_wavelet.xaxis.set_major_locator(ticker.AutoLocator())
+        ax_wavelet.xaxis.set_major_formatter(formatter)
+
+        C, S = wa.coi
+        C = np.insert(C, [0, C.size], [t.min(), t.max()])
+        S = np.insert(S, [0, S.size], [0, 0])
+
+        ax_wavelet.set_ylabel('scale, s')
+        ax_wavelet.set_ylim(scales.max(), scales.min())
+        ax_wavelet.set_yscale('log')
+        ax_wavelet.yaxis.set_major_formatter(ticker.ScalarFormatter())
+
+        ax_wavelet.fill_between(x=C, y1=S, y2=scales.max(), color='gray', alpha=0.3)
+        ax_wavelet.plot(t, self.cyclotron_period[elements[0]['name']], 'r-', linewidth=1)
+
+        ax_wavelet.grid(b=True, which='major', color='k', linestyle='-', alpha=.2, zorder=3)
+
         ax_wavelet_fourier = ax_wavelet.twinx()
 
-        ax_wavelet_fourier.set_yscale('log')
-        ax_wavelet_fourier.set_yticks([10 ** -1, 10 ** -2, 5 * 10 ** -3, 10 ** -3])
         ax_wavelet_fourier.set_ylabel('frequency, Hz')
-
         fourier_lim = [1 / wa.fourier_period(i) for i in ax_wavelet.get_ylim()]
         ax_wavelet_fourier.set_ylim(fourier_lim)
+        ax_wavelet_fourier.set_yscale('log')
+        ax_wavelet_fourier.set_yticks([10 ** -1, 10 ** -2, 5 * 10 ** -3, 10 ** -3])
 
         self.plot.getFigure().set_tight_layout(True)
 
@@ -215,8 +228,6 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.setupUi(self)
 
         self.buttonOpenDataFile.clicked.connect(self.openDataFile)
-        self.listTime.currentIndexChanged.connect(self.listTimeChanged)
-        self.listData.currentIndexChanged.connect(self.listDataChanged)
         self.buttonPlotData.clicked.connect(self.plotData)
         self.buttonPlotWavelet.clicked.connect(self.plotWavelet)
 
@@ -249,7 +260,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             self.dataView.setModel(self.dataModel)
 
             if self.disabled:
-                disabled_items = [self.listTime, self.listData, self.buttonPlotData, self.buttonPlotWavelet, self.dataView, self.chemical]
+                disabled_items = [self.listTime, self.listData, self.buttonPlotData, self.buttonPlotWavelet,
+                                  self.dataView, self.chemical]
                 for item in disabled_items:
                     item.setEnabled(True)
                 self.disabled = False
@@ -264,7 +276,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             self.currentFile.setText(self.open_file_name)
 
     def plotData(self):
-        plt = PlotDataWindow(self.data, self.time_axis, self.data_axis, parent=self)
+        plt = PlotDataWindow(self.data, self.listTime.currentText(), self.listData.currentText(), parent=self)
         plt.show()
 
     def plotWavelet(self):
@@ -280,22 +292,16 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             element_sym = re.findall('([A-Z][a-z]?)+', element)[0]
 
             elements_mass = {'H': 1, 'He': 4, 'Li': 7, 'Be': 9, 'B': 11, 'C': 12, 'N': 14, 'O': 16, 'F': 19, 'Ne': 20,
-                             'Na': 23,
-                             'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40, 'Ca': 40}
+                             'Na': 23, 'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40,
+                             'Ca': 40}
 
             mass = elements_mass[element_sym]
 
             elements.append({'name': element, 'mass': mass, 'charge': charge})
 
-        plt = WaveletPlotWindow(self.data, self.time_axis, self.data_axis, elements=elements,
+        plt = WaveletPlotWindow(self.data, self.listTime.currentText(), self.listData.currentText(), elements=elements,
                                 date_format=self.dateFormat.text(), parent=self)
         plt.show()
-
-    def listTimeChanged(self, i):
-        self.time_axis = self.listTime.currentText()
-
-    def listDataChanged(self, i):
-        self.data_axis = self.listData.currentText()
 
 
 if __name__ == '__main__':
