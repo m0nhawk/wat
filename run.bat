@@ -1,16 +1,12 @@
 @echo off
 
-setlocal
+setlocal EnableDelayedExpansion
 
-set PYTHONPATH=%PYTHONPATH%;%cd%;%cd%\src
+set PYTHONPATH=%PYTHONPATH%;%cd%;%cd%\src;%cd%\ui
 
-if not exist "ui_main.py" (
-    pyuic5 main.ui -o ui_main.py
-
-    set PYTHONPATH=%PYTHONPATH%;%cd%;%cd%\src
-    python wat.py
-) else (
-    python wat.py
+IF NOT EXIST "ui\ui_main.py" (
+    start /I /B pyuic5 ui\main.ui -o ui\ui_main.py
 )
+python main.py
 
 endlocal

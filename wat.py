@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 
 import matplotlib.colors as colors
 import matplotlib.dates as mdates
@@ -12,7 +11,7 @@ import pyqtgraph as pg
 import pyqtgraph.widgets.MatplotlibWidget as mpw
 import scipy
 import wavelets
-from PyQt5.QtWidgets import (QMainWindow, QApplication, QFileDialog, QGridLayout, QAbstractItemView, QPushButton,
+from PyQt5.QtWidgets import (QMainWindow, QFileDialog, QGridLayout, QAbstractItemView, QPushButton,
                              QDialog, QVBoxLayout)
 
 import ui_main
@@ -21,7 +20,7 @@ from physics import cyclotron_frequency
 
 
 class PlotDataWindow(QDialog):
-    def __init__(self, data, time_axis, data_axis, parent=None):
+    def __init__(self, data, time_axis, data_axis, date_format='', parent=None):
         super(PlotDataWindow, self).__init__(parent)
 
         self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 2.0))
@@ -29,10 +28,14 @@ class PlotDataWindow(QDialog):
         self.layout.addWidget(self.plot)
         self.setLayout(self.layout)
 
-        self.plot_data(data, time_axis, data_axis)
+        self.plot_data(data, time_axis, data_axis, date_format)
 
-    def plot_data(self, data, time_axis, data_axis):
+    def plot_data(self, data, time_axis, data_axis, date_format=''):
         time_slice = pd.to_datetime(data[time_axis], unit='s')
+        if date_format == '':
+            self.time = pd.to_datetime(data[time_axis], unit='s')
+        else:
+            self.time = pd.to_datetime(data[time_axis], format=date_format)
         b_slice = data[data_axis].values
 
         ax = self.plot.getFigure().add_subplot(111)
@@ -43,7 +46,7 @@ class PlotDataWindow(QDialog):
         ax.xaxis.set_major_locator(mdates.SecondLocator(interval=960))
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
 
-        ax.set_ylable(data_axis)
+        ax.set_ylabel(data_axis)
         ax.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
         ax.grid(True)
 
@@ -276,7 +279,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             self.currentFile.setText(self.open_file_name)
 
     def plotData(self):
-        plt = PlotDataWindow(self.data, self.listTime.currentText(), self.listData.currentText(), parent=self)
+        plt = PlotDataWindow(self.data, self.listTime.currentText(), self.listData.currentText(),
+                             self.dateFormat.text(), parent=self)
         plt.show()
 
     def plotWavelet(self):
@@ -302,10 +306,3 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         plt = WaveletPlotWindow(self.data, self.listTime.currentText(), self.listData.currentText(), elements=elements,
                                 date_format=self.dateFormat.text(), parent=self)
         plt.show()
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    form = WaveletAnalysisApp()
-    form.show()
-    sys.exit(app.exec_())
