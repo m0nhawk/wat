@@ -1,1 +1,1 @@
-# wat: Wavelet Analysis Tool
+# wat: Wave Analysis Tool
