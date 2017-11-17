@@ -7,11 +7,14 @@ import pandas as pd
 import pyqtgraph as pg
 import pyqtgraph.widgets.MatplotlibWidget as mpw
 from PyQt5.QtWidgets import (QMainWindow, QFileDialog, QGridLayout, QAbstractItemView, QPushButton,
-                             QDialog, QVBoxLayout)
+                             QDialog, QVBoxLayout, QLineEdit)
+from pandas.plotting import _converter
 
 import ui_main
 from models import PandasModel
 from physics import wavelet
+
+_converter.register()
 
 
 class PlotDataWindow(QDialog):
@@ -28,7 +31,7 @@ class PlotDataWindow(QDialog):
         ax.plot(time, field)
 
         ax.set_xlabel(sign['xlabel'])
-        ax.set_xlim([time[0], time[-1]])
+        ax.set_xlim(time[0], time[-1])
         ax.xaxis.set_major_locator(mdates.SecondLocator(interval=960))
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
 
@@ -66,6 +69,9 @@ class WaveletPlotWindow(QDialog):
         self.save_cyclotron_button.setText("Save Cyclotron")
         self.verticalLayout.addWidget(self.save_cyclotron_button)
         self.save_cyclotron_button.clicked.connect(self.save_cyclotron)
+
+        self.integral_value = QLineEdit(self)
+        self.verticalLayout.addWidget(self.integral_value)
 
         self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
         self.verticalLayout.addWidget(self.plot)
@@ -106,8 +112,11 @@ class WaveletPlotWindow(QDialog):
 
         fig = self.plot.getFigure()
 
-        self.cyclotron_power = wavelet(wavelet_time, magnetic_field, elements=elements, fig=fig,
-                                       sign={'title': title, 'xlabel': 'time (H:M:S)', 'ylabel': 'Field (nT)'})
+        self.cyclotron_power, self.integral = wavelet(wavelet_time, magnetic_field, elements=elements, fig=fig,
+                                                      sign={'title': title, 'xlabel': 'time (H:M:S)',
+                                                            'ylabel': 'Field (nT)'})
+
+        self.integral_value.setText(str(self.integral))
 
 
 class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):

@@ -16,12 +16,80 @@ def cyclotron_frequency(magnetic_field, charge=1, element=1):
     return cyclotron_data
 
 
+class Wavelet:
+    def __init__(self, t, y):
+        self.t = t
+        self.y = y
+
+        self.wa = None
+
+    def perform_wavelet_analysis(self):
+        t0 = self.t[0]
+        same_dx = np.all(np.diff(self.t))
+
+        if not same_dx:
+            return
+
+        dt = np.mean(np.diff(self.t))
+        self.wa = wavelets.WaveletAnalysis(time=self.t, data=self.y, dt=dt, dj=0.125, wavelet=wavelets.Morlet(),
+                                           unbias=True)
+
+        return self.wa
+
+    def get_cyclotron_on(self, element):
+        C, S = self.wa.coi
+        t = self.wa.time
+        power = self.wa.wavelet_power
+        scales = self.wa.scales
+
+        C = np.insert(C, [0, C.size], [t.min(), t.max()])
+        S = np.insert(S, [0, S.size], [0, 0])
+
+        scales = np.array([s for s in scales if s < S.max()])
+        power = power[0:len(scales)]
+
+        interpolated_coi = scipy.interpolate.interp1d(C, S, bounds_error=False)
+
+        def find_nearest_idx(array, value):
+            idx = (np.abs(array - value)).argmin()
+            return idx
+
+        charge = element['charge']
+        mass = element['mass']
+
+        cyclotron_period = 1 / cyclotron_frequency(self.y, charge, mass)
+        cyclotron_period[cyclotron_period > interpolated_coi(t)] = np.nan
+
+        t_ = np.arange(0.0, len(t))
+        s_ = np.array([find_nearest_idx(scales, x) for x in cyclotron_period], dtype=float)
+
+        start_idx = np.array([find_nearest_idx(scales, x) for x in 0.1 * cyclotron_period], dtype=float)
+        end_idx = np.array([find_nearest_idx(scales, x) for x in 0.4 * cyclotron_period], dtype=float)
+
+        s_[s_ == 0] = np.nan
+        cyclotron_power = scipy.ndimage.map_coordinates(power, np.vstack((s_, t_)), order=0)
+        cyclotron_power[cyclotron_power == 0] = np.nan
+
+        integral = 0
+
+        for tau in t_:
+            tau = int(tau)
+            if np.isnan(cyclotron_period[tau]):
+                continue
+
+            ss = [power[s, tau] for s in range(int(start_idx[tau]), int(end_idx[tau]))]
+
+            integral += np.nansum(ss) * np.mean(np.diff(self.t)) * cyclotron_period[tau]
+
+        return cyclotron_period, cyclotron_power, integral
+
+
 def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
-    dt = time[1] - time[0]
-    wa = wavelets.WaveletAnalysis(time=time, data=field, dt=dt, dj=0.125, wavelet=wavelets.Morlet(), unbias=True)
-    power = wa.wavelet_power
-    scales = wa.scales
+    wat = Wavelet(time, field)
+    wa = wat.perform_wavelet_analysis()
     t = wa.time
+    scales = wa.scales
+    power = wa.wavelet_power
 
     if elements:
         heights_ratios = [1, 1, 4]
@@ -56,7 +124,6 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     ax_magnetic.grid(True)
 
     C, S = wa.coi
-    C = np.insert(C, [0, C.size], [t.min(), t.max()])
     S = np.insert(S, [0, S.size], [0, 0])
 
     scales = np.array([s for s in scales if s < S.max()])
@@ -65,38 +132,21 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     vmin = power.min() if wl_params is None or 'vmin' not in wl_params else wl_params['vmin']
     vmax = power.max() if wl_params is None or 'vmax' not in wl_params else wl_params['vmax']
 
-    interpolated_coi = scipy.interpolate.interp1d(C, S, bounds_error=False)
-
     def find_nearest_idx(array, value):
         idx = (np.abs(array - value)).argmin()
         return idx
 
-    c_period = None
-    if elements:
-        c_period = {}
-        c_power = {}
+    c_period = {}
+    cyclotron_period = None
+    cyclotron_power = None
+    integral = 0
 
+    if elements:
         ax_cyclotron = fig.add_subplot(grid[1])
 
         for element in elements:
-            charge = element['charge']
-            mass = element['mass']
-            name = element['name']
-
-            cyclotron_period = 1 / cyclotron_frequency(field, charge, mass)
-            cyclotron_period[cyclotron_period > interpolated_coi(t)] = np.nan
-
-            c_period[name] = cyclotron_period
-
-            t_ = np.arange(0.0, len(t))
-            s_ = np.array([find_nearest_idx(scales, x) for x in cyclotron_period], dtype=float)
-
-            s_[s_ == 0] = np.nan
-            cyclotron_power = scipy.ndimage.map_coordinates(power, np.vstack((s_, t_)), order=0)
-            cyclotron_power[cyclotron_power == 0] = np.nan
-
-            c_power[name] = cyclotron_power
-
+            cyclotron_period, cyclotron_power, integral = wat.get_cyclotron_on(element=element)
+            c_period[element['name']] = cyclotron_period
             ax_cyclotron.semilogy(t, cyclotron_power)
 
         ax_cyclotron.set_title('Power on cyclotron frequency')
@@ -143,8 +193,12 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     ax_wavelet.fill_between(x=C, y1=S, y2=scale_max, color='gray', alpha=0.3)
 
     if c_period:
-        for key, value in c_period.items():
-            ax_wavelet.plot(t, value, '-', linewidth=1)
+        if len(c_period) == 1:
+            (_, value), = c_period.items()
+            ax_wavelet.fill_between(t, 0.1 * value, 0.4 * value, color='r', alpha=0.5)
+        else:
+            for key, value in c_period.items():
+                ax_wavelet.plot(t, value, '-', color='r', linewidth=1)
 
     ax_wavelet.grid(b=True, which='major', color='k', linestyle='-', alpha=.2, zorder=3)
 
@@ -157,3 +211,5 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     ax_wavelet_fourier.set_yticks([10 ** (-n) for n in range(3)])
 
     fig.set_tight_layout(True)
+
+    return c_period, integral
