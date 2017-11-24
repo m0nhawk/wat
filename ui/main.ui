@@ -114,7 +114,12 @@
         </property>
         <item>
          <property name="text">
-          <string></string>
+          <string/>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>%Y-%m-%d %H:%M:%S.%f</string>
          </property>
         </item>
         <item>
