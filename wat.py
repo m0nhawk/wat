@@ -129,9 +129,9 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         super(WaveletAnalysisApp, self).__init__()
         self.setupUi(self)
 
-        self.buttonOpenDataFile.clicked.connect(self.openDataFile)
-        self.buttonPlotData.clicked.connect(self.plotData)
-        self.buttonPlotWavelet.clicked.connect(self.plotWavelet)
+        self.buttonOpenDataFile.clicked.connect(self.open_data)
+        self.buttonPlotData.clicked.connect(self.plot_data)
+        self.buttonPlotWavelet.clicked.connect(self.plot_wavelet)
 
         self.data = None
         self.disabled = True
@@ -143,8 +143,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.dataView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\B phi')
+    def open_data(self):
 
-    def openDataFile(self):
         filename, ok = QFileDialog.getOpenFileName(self, _('Open file'),
                                                    self.open_folder_path,
                                                    filter="Text files (*.txt *.asc *.dat *.csv *.cef);;All files (*.*)")
@@ -175,7 +175,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
             self.currentFile.setText(self.open_file_name)
 
-    def plotData(self):
+    def plot_data(self):
         range = self.range.text()
         if range:
             begin = range.split(":")[0]
@@ -189,7 +189,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
                       self.dateFormat.currentText())
         plt.show()
 
-    def plotWavelet(self):
+    def plot_wavelet(self):
         range = self.range.text()
         if range:
             begin = range.split(":")[0]
