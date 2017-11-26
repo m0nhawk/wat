@@ -10,14 +10,16 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      1760,         59]
-NotebookOptionsPosition[      1457,         45]
-NotebookOutlinePosition[      1802,         60]
-CellTagsIndexPosition[      1759,         57]
+NotebookDataLength[      2548,         81]
+NotebookOptionsPosition[      2122,         65]
+NotebookOutlinePosition[      2470,         80]
+CellTagsIndexPosition[      2427,         77]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
+
+Cell[CellGroupData[{
 Cell[BoxData[
  RowBox[{"FormulaData", "[", 
   RowBox[{"\"\<CyclotronFrequency\>\"", ",", 
@@ -41,11 +43,29 @@ Cell[BoxData[
     "}"}]}], "]"}]], "Input",
  CellChangeTimes->{{3.694198439870682*^9, 3.6941984398711815`*^9}, 
    3.7007639873388495`*^9},ExpressionUUID->"1a9dd2c0-d199-4669-8395-\
-692c252a0dbf"]
+692c252a0dbf"],
+
+Cell[BoxData[
+ RowBox[{
+  TemplateBox[{StyleBox["\"\[Nu]\""],"\"Frequency\""},
+   "QuantityVariable",
+   DisplayFunction->(TooltipBox[
+     StyleBox[#, FontColor -> GrayLevel[0.4], ShowStringCharacters -> False], 
+     RowBox[{"Quantity variable:", " frequency"}], TooltipStyle -> 
+     "TextStyling"]& )], "\[Equal]", 
+  TemplateBox[{
+   "0.43122412365401686`",
+    RowBox[{"\"per \"", "\[InvisibleSpace]", "\"second\""}],
+    Row[{"reciprocal", " ", "seconds"}],FractionBox["1", "\"Seconds\""]},
+   "Quantity"]}]], "Output",
+ CellChangeTimes->{
+  3.720690658948271*^9},ExpressionUUID->"7ea2c4b9-b2ec-4507-b330-\
+a3f54832410d"]
+}, Open  ]]
 },
-WindowSize->{759, 813},
-WindowMargins->{{478, Automatic}, {Automatic, 104}},
-FrontEndVersion->"11.1 for Microsoft Windows (64-bit) (March 13, 2017)",
+WindowSize->{1217, 677},
+WindowMargins->{{-8, Automatic}, {Automatic, -8}},
+FrontEndVersion->"11.2 for Microsoft Windows (64-bit) (September 10, 2017)",
 StyleDefinitions->"Default.nb"
 ]
 (* End of Notebook Content *)
@@ -59,8 +79,10 @@ CellTagsIndex->{}
 *)
 (*NotebookFileOutline
 Notebook[{
-Cell[558, 20, 895, 23, 69, "Input", "ExpressionUUID" -> \
-"1a9dd2c0-d199-4669-8395-692c252a0dbf"]
+Cell[CellGroupData[{
+Cell[580, 22, 895, 23, 28, "Input",ExpressionUUID->"1a9dd2c0-d199-4669-8395-692c252a0dbf"],
+Cell[1478, 47, 628, 15, 76, "Output",ExpressionUUID->"7ea2c4b9-b2ec-4507-b330-a3f54832410d"]
+}, Open  ]]
 }
 ]
 *)
