@@ -102,7 +102,7 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
     height = len(heights_ratios)
 
     grid = gridspec.GridSpec(height, 1, height_ratios=heights_ratios)
-    grid.update(wspace=0.0, hspace=0.0)
+    # grid.update(wspace=0.0, hspace=0.0)
     ax_magnetic = fig.add_subplot(grid[0])
 
     formatter = ticker.FuncFormatter(helpers.date_formatter)
@@ -111,12 +111,10 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
 
     ax_magnetic.set_title(labels['title'])
 
-    ax_magnetic.set_xlabel('time, UT')
     ax_magnetic.set_xlim(t[0], t[-1])
-    ax_magnetic.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
     ax_magnetic.xaxis.set_major_formatter(formatter)
 
-    ax_magnetic.xaxis.label.set_visible(False)
+    ax_magnetic.xaxis.set_visible(False)
 
     ax_magnetic.set_ylabel(labels['ylabel'])
     ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
@@ -137,8 +135,6 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
         return idx
 
     c_period = {}
-    cyclotron_period = None
-    cyclotron_power = None
     integral = 0
 
     if elements:
@@ -169,7 +165,8 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
     s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
 
     cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.1)
-    cb.set_label('Wavelet power spectrum (nT)^2')
+    # cb.set_label('Wavelet power spectrum (nT)^2')
+    cb.set_label('Потужність, нТ^2')
     cb.set_clim(vmin=vmin, vmax=vmax)
 
     ax_wavelet.set_xlabel(labels['xlabel'])
@@ -180,10 +177,11 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
     scale_min = scales.min() if wl_params is None or 'smin' not in wl_params else wl_params['smin']
     scale_max = scales.max() if wl_params is None or 'smax' not in wl_params else wl_params['smax']
 
-    ax_wavelet.set_ylabel('Scale (s)')
+    # ax_wavelet.set_ylabel('Scale (s)')
+    ax_wavelet.set_ylabel('Масштаб, с')
     ax_wavelet.set_ylim(scale_max, scale_min)
     ax_wavelet.set_yscale('log', nonposy='clip')
-    ax_wavelet.set_yticks([10 ** n for n in range(2, 3)])
+    ax_wavelet.set_yticks([10 ** n for n in range(0, 4)])
     ax_wavelet.yaxis.set_major_formatter(ticker.ScalarFormatter())
 
     C, S = wa.coi
@@ -204,7 +202,8 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
 
     ax_wavelet_fourier = ax_wavelet.twinx()
 
-    ax_wavelet_fourier.set_ylabel('Frequency (Hz)')
+    # ax_wavelet_fourier.set_ylabel('Frequency (Hz)')
+    ax_wavelet_fourier.set_ylabel('Частота, Гц')
     fourier_lim = [1 / wa.fourier_period(i) for i in ax_wavelet.get_ylim()]
     ax_wavelet_fourier.set_ylim(fourier_lim)
     ax_wavelet_fourier.set_yscale('log')
