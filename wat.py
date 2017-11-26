@@ -1,3 +1,4 @@
+import gettext
 import os
 import re
 
@@ -13,6 +14,10 @@ from pandas.plotting import _converter
 import ui_main
 from models import PandasModel
 from physics import wavelet
+
+localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locale')
+translate = gettext.translation('wat', localedir, fallback=True)
+_ = translate.gettext
 
 _converter.register()
 
@@ -66,7 +71,7 @@ class WaveletPlotWindow(QDialog):
         self.verticalLayout.setObjectName("verticalLayout")
 
         self.save_cyclotron_button = QPushButton(self)
-        self.save_cyclotron_button.setText("Save Cyclotron")
+        self.save_cyclotron_button.setText(_('Save Cyclotron'))
         self.verticalLayout.addWidget(self.save_cyclotron_button)
         self.save_cyclotron_button.clicked.connect(self.save_cyclotron)
 
@@ -86,7 +91,7 @@ class WaveletPlotWindow(QDialog):
                           title='Wavelet modulus')
 
     def save_cyclotron(self):
-        filename, ok = QFileDialog.getSaveFileName(self, 'Save file',
+        filename, ok = QFileDialog.getSaveFileName(self, _('Save file'),
                                                    self.open_folder_path,
                                                    "Text files (*.txt *.asc *.dat *.csv)")
 
@@ -140,7 +145,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\B phi')
 
     def openDataFile(self):
-        filename, ok = QFileDialog.getOpenFileName(None, 'Open file',
+        filename, ok = QFileDialog.getOpenFileName(self, _('Open file'),
                                                    self.open_folder_path,
                                                    filter="Text files (*.txt *.asc *.dat *.csv *.cef);;All files (*.*)")
 
