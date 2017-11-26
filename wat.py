@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (QMainWindow, QFileDialog, QGridLayout, QAbstractIte
                              QDialog, QVBoxLayout, QLineEdit)
 from pandas.plotting import _converter
 
+import helpers
 import ui_main
 from models import PandasModel
 from physics import wavelet
@@ -62,7 +63,7 @@ class PlotDataWindow(QDialog):
 
 
 class WaveletPlotWindow(QDialog):
-    def __init__(self, data, time_axis, data_axis, elements=None, date_format='', parent=None):
+    def __init__(self, time, field, date_format=None, elements=None, labels=None, parent=None):
         super(WaveletPlotWindow, self).__init__(parent)
 
         self.resize(900, 900)
@@ -81,14 +82,18 @@ class WaveletPlotWindow(QDialog):
         self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
         self.verticalLayout.addWidget(self.plot)
 
-        self.time = None
+        self.time = helpers.get_formatted_time(time, date_format=date_format)
+        self.field = field.values
         self.cyclotron_power = {}
         self.elements = elements
+        self.labels = labels
 
         self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\wavelet_cd')
+        fig = self._plot.getFigure()
 
-        self.plot_wavelet(data, time_axis, data_axis, elements=elements, date_format=date_format,
-                          title='Wavelet modulus')
+        self.cyclotron_power, self.integral = wavelet(self.time, self.field, elements=self.elements, labels=self.labels, fig=fig)
+
+        self.integral_value.setText(str(self.integral))
 
     def save_cyclotron(self):
         filename, ok = QFileDialog.getSaveFileName(self, _('Save file'),
@@ -104,24 +109,6 @@ class WaveletPlotWindow(QDialog):
 
             result = pd.DataFrame(res)
             result.to_csv(filename, index=False, na_rep=0)
-
-    def plot_wavelet(self, data, time_axis, data_axis, title='', elements=None, date_format=''):
-        magnetic_field = data[data_axis].values
-
-        if date_format == '':
-            self.time = pd.to_datetime(data[time_axis], unit='s')
-        else:
-            self.time = pd.to_datetime(data[time_axis], format=date_format)
-
-        wavelet_time = self.time.apply(lambda x: x.tz_localize('utc').timestamp()).values
-
-        fig = self.plot.getFigure()
-
-        self.cyclotron_power, self.integral = wavelet(wavelet_time, magnetic_field, elements=elements, fig=fig,
-                                                      sign={'title': title, 'xlabel': 'time (H:M:S)',
-                                                            'ylabel': 'Field (nT)'})
-
-        self.integral_value.setText(str(self.integral))
 
 
 class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):

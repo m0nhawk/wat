@@ -85,7 +85,9 @@ class Wavelet:
         return cyclotron_period, cyclotron_power, integral
 
 
-def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
+def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
+    time = time.apply(lambda x: x.tz_localize('utc').timestamp()).values
+
     wat = Wavelet(time, field)
     wa = wat.perform_wavelet_analysis()
     t = wa.time
@@ -107,7 +109,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
 
     ax_magnetic.plot(t, field)
 
-    ax_magnetic.set_title(sign['title'])
+    ax_magnetic.set_title(labels['title'])
 
     ax_magnetic.set_xlabel('time, UT')
     ax_magnetic.set_xlim(t[0], t[-1])
@@ -116,7 +118,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
 
     ax_magnetic.xaxis.label.set_visible(False)
 
-    ax_magnetic.set_ylabel(sign['ylabel'])
+    ax_magnetic.set_ylabel(labels['ylabel'])
     ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
 
     ax_magnetic.grid(True)
@@ -149,7 +151,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
 
         ax_cyclotron.set_title('Power on cyclotron frequency')
 
-        ax_cyclotron.set_xlabel(sign['xlabel'])
+        ax_cyclotron.set_xlabel(labels['xlabel'])
         ax_cyclotron.set_xlim(t[0], t[-1])
         ax_cyclotron.xaxis.set_major_locator(ticker.AutoLocator())
         ax_cyclotron.xaxis.set_major_formatter(formatter)
@@ -170,7 +172,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     cb.set_label('Wavelet power spectrum (nT)^2')
     cb.set_clim(vmin=vmin, vmax=vmax)
 
-    ax_wavelet.set_xlabel(sign['xlabel'])
+    ax_wavelet.set_xlabel(labels['xlabel'])
     ax_wavelet.set_xlim(t[0], t[-1])
     ax_wavelet.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
     ax_wavelet.xaxis.set_major_formatter(formatter)
