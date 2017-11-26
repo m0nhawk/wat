@@ -69,7 +69,7 @@ class WaveletPlotWindow(QDialog):
         self.resize(900, 900)
 
         self.verticalLayout = QVBoxLayout(self)
-        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout.setObjectName('verticalLayout')
 
         self.save_cyclotron_button = QPushButton(self)
         self.save_cyclotron_button.setText(_('Save Cyclotron'))
@@ -79,8 +79,8 @@ class WaveletPlotWindow(QDialog):
         self.integral_value = QLineEdit(self)
         self.verticalLayout.addWidget(self.integral_value)
 
-        self.plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
-        self.verticalLayout.addWidget(self.plot)
+        self._plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
+        self.verticalLayout.addWidget(self._plot)
 
         self.time = helpers.get_formatted_time(time, date_format=date_format)
         self.field = field.values
@@ -96,9 +96,10 @@ class WaveletPlotWindow(QDialog):
         self.integral_value.setText(str(self.integral))
 
     def save_cyclotron(self):
+        save_file_filter = 'Text files (*.txt *.asc *.dat *.csv)'
         filename, ok = QFileDialog.getSaveFileName(self, _('Save file'),
                                                    self.open_folder_path,
-                                                   "Text files (*.txt *.asc *.dat *.csv)")
+                                                   filter=save_file_filter)
 
         if ok:
             res = {'time': self.time}
@@ -131,10 +132,11 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
         self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\B phi')
     def open_data(self):
+        open_file_filter = 'Text files (*.txt *.asc *.dat *.csv *.cef);;All files (*.*)'
 
         filename, ok = QFileDialog.getOpenFileName(self, _('Open file'),
                                                    self.open_folder_path,
-                                                   filter="Text files (*.txt *.asc *.dat *.csv *.cef);;All files (*.*)")
+                                                   filter=open_file_filter)
 
         self.open_folder_path = os.path.dirname(filename)
         self.open_file_name = os.path.basename(filename)
@@ -163,10 +165,10 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             self.currentFile.setText(self.open_file_name)
 
     def plot_data(self):
-        range = self.range.text()
-        if range:
-            begin = range.split(":")[0]
-            end = range.split(":")[1]
+        data_range = self.range.text()
+        if data_range:
+            begin = data_range.split(':')[0]
+            end = data_range.split(':')[1]
         else:
             begin = 0
             end = self.data.shape[0]
@@ -177,10 +179,10 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         plt.show()
 
     def plot_wavelet(self):
-        range = self.range.text()
-        if range:
-            begin = range.split(":")[0]
-            end = range.split(":")[1]
+        data_range = self.range.text()
+        if data_range:
+            begin = data_range.split(':')[0]
+            end = data_range.split(':')[1]
         else:
             begin = 0
             end = self.data.shape[0]
@@ -193,7 +195,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         for element in elements:
             if not element:
                 continue
-            charge = element.count("+")
+            charge = element.count('+')
 
             element_sym = re.findall('([A-Z][a-z]?)+', element)[0]
 
