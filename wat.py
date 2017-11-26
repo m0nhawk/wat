@@ -23,43 +23,35 @@ _ = translate.gettext
 _converter.register()
 
 
-class PlotDataWindow(QDialog):
-    def __init__(self, parent=None):
-        super(PlotDataWindow, self).__init__(parent)
+class FieldPlotWindow(QDialog):
+    def __init__(self, time, field, date_format=None, labels=None, parent=None):
+        super(FieldPlotWindow, self).__init__(parent)
+
+        self.time = helpers.get_formatted_time(time, date_format=date_format).values
+        self.field = field.values
+        self.labels = labels
 
         self._plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 2.0))
         self.layout = QGridLayout()
         self.layout.addWidget(self._plot)
         self.setLayout(self.layout)
 
-    def plot(self, time, field, fig=None, sign=None):
-        ax = fig.add_subplot(111)
-        ax.plot(time, field)
+        fig = self._plot.getFigure()
 
-        ax.set_xlabel(sign['xlabel'])
-        ax.set_xlim(time[0], time[-1])
+        ax = fig.add_subplot(111)
+        ax.plot(self.time, self.field)
+
+        ax.set_xlabel(labels['xlabel'])
+        ax.set_xlim(self.time[0], self.time[-1])
         ax.xaxis.set_major_locator(dates.SecondLocator(interval=960))
         ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
 
-        ax.set_ylabel(sign['ylabel'])
+        ax.set_ylabel(labels['ylabel'])
         ax.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
 
         ax.grid(True)
 
         fig.set_tight_layout(True)
-
-    def plot_data(self, data, time_axis, data_axis, date_format=''):
-        if date_format:
-            time = pd.to_datetime(data[time_axis], format=date_format)
-        else:
-            time = pd.to_datetime(data[time_axis], unit='s')
-
-        time = time.values
-        field = data[data_axis].values
-
-        fig = self._plot.getFigure()
-
-        self.plot(time, field, fig=fig, sign={'xlabel': 'time, UT', 'ylabel': data_axis})
 
 
 class WaveletPlotWindow(QDialog):
@@ -173,9 +165,15 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             begin = 0
             end = self.data.shape[0]
 
-        plt = PlotDataWindow(parent=self)
-        plt.plot_data(self.data.loc[begin:end], self.listTime.currentText(), self.listData.currentText(),
-                      self.dateFormat.currentText())
+        time_axis = self.listTime.currentText()
+        field_axis = self.listData.currentText()
+
+        time = self.data.loc[begin:end][time_axis]
+        field = self.data.loc[begin:end][field_axis]
+        date_format = self.dateFormat.currentText()
+        labels = {'xlabel': time_axis, 'ylabel': field_axis}
+
+        plt = FieldPlotWindow(time, field, date_format=date_format, labels=labels, parent=self)
         plt.show()
 
     def plot_wavelet(self):
@@ -207,6 +205,15 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
 
             elements_dict.append({'name': element, 'mass': mass, 'charge': charge})
 
-        plt = WaveletPlotWindow(self.data.loc[begin:end], self.listTime.currentText(), self.listData.currentText(),
-                                elements=elements_dict, date_format=self.dateFormat.currentText(), parent=self)
+        time_axis = self.listTime.currentText()
+        field_axis = self.listData.currentText()
+
+        time = self.data.loc[begin:end][time_axis]
+        field = self.data.loc[begin:end][field_axis]
+        date_format = self.dateFormat.currentText()
+        labels = {'title': _('Wavelet Analysis'),
+                  'xlabel': _('time, H:M:S'),
+                  'ylabel': _('|B|, nT')}
+
+        plt = WaveletPlotWindow(time, field, date_format=date_format, elements=elements_dict, labels=labels, parent=self)
         plt.show()
