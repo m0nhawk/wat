@@ -142,7 +142,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     integral = 0
 
     if elements:
-        ax_cyclotron = fig.add_subplot(grid[1])
+        ax_cyclotron = fig.add_subplot(grid[1], sharex=ax_magnetic)
 
         for element in elements:
             cyclotron_period, cyclotron_power, integral = wat.get_cyclotron_on(element=element)
@@ -163,7 +163,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
 
     T, S = np.meshgrid(t, scales)
 
-    ax_wavelet = fig.add_subplot(grid[height - 1])
+    ax_wavelet = fig.add_subplot(grid[height - 1], sharex=ax_magnetic)
     levels = np.linspace(vmin, vmax, 64, endpoint=True)
     norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
     s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
