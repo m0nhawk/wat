@@ -84,7 +84,8 @@ class WaveletPlotWindow(QDialog):
 
         fig = self._plot.getFigure()
 
-        self.cyclotron_power, self.integral = wavelet(self.time, self.field, elements=self.elements, labels=self.labels, fig=fig)
+        self.cyclotron_power, self.integral = wavelet(self.time, self.field, elements=self.elements, labels=self.labels,
+                                                      fig=fig)
 
         self.integral_value.setText(str(self.integral))
 
@@ -193,6 +194,10 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         elements = self.chemical.text()
         elements = elements.split(',')
 
+        elements_mass = {'H': 1, 'He': 4, 'Li': 7, 'Be': 9, 'B': 11, 'C': 12, 'N': 14, 'O': 16, 'F': 19, 'Ne': 20,
+                         'Na': 23, 'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40,
+                         'Ca': 40}
+
         elements_dict = []
 
         for element in elements:
@@ -201,10 +206,6 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
             charge = element.count('+')
 
             element_sym = re.findall('[A-Z][a-z]?', element)[0]
-
-            elements_mass = {'H': 1, 'He': 4, 'Li': 7, 'Be': 9, 'B': 11, 'C': 12, 'N': 14, 'O': 16, 'F': 19, 'Ne': 20,
-                             'Na': 23, 'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40,
-                             'Ca': 40}
 
             mass = elements_mass[element_sym]
 
@@ -220,5 +221,6 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
                   'xlabel': _('time, H:M:S'),
                   'ylabel': _('|B|, nT')}
 
-        plt = WaveletPlotWindow(time, field, date_format=date_format, elements=elements_dict, labels=labels, parent=self)
+        plt = WaveletPlotWindow(time, field, date_format=date_format, elements=elements_dict, labels=labels,
+                                parent=self)
         plt.show()
