@@ -200,7 +200,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
                 continue
             charge = element.count('+')
 
-            element_sym = re.findall('([A-Z][a-z]?)+', element)[0]
+            element_sym = re.findall('[A-Z][a-z]?', element)[0]
 
             elements_mass = {'H': 1, 'He': 4, 'Li': 7, 'Be': 9, 'B': 11, 'C': 12, 'N': 14, 'O': 16, 'F': 19, 'Ne': 20,
                              'Na': 23, 'Mg': 24, 'Al': 27, 'Si': 28, 'P': 30, 'S': 32, 'Cl': 35.5, 'Ar': 40, 'K': 40,
