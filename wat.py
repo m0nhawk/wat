@@ -2,7 +2,7 @@ import gettext
 import os
 import re
 
-import matplotlib.dates as mdates
+import matplotlib.dates as dates
 import matplotlib.ticker as ticker
 import pandas as pd
 import pyqtgraph as pg
@@ -37,8 +37,8 @@ class PlotDataWindow(QDialog):
 
         ax.set_xlabel(sign['xlabel'])
         ax.set_xlim(time[0], time[-1])
-        ax.xaxis.set_major_locator(mdates.SecondLocator(interval=960))
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
+        ax.xaxis.set_major_locator(dates.SecondLocator(interval=960))
+        ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
 
         ax.set_ylabel(sign['ylabel'])
         ax.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
