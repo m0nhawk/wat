@@ -80,7 +80,8 @@ class WaveletPlotWindow(QDialog):
         self.elements = elements
         self.labels = labels
 
-        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\wavelet_cd')
+        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\knit')
+
         fig = self._plot.getFigure()
 
         self.cyclotron_power, self.integral = wavelet(self.time, self.field, elements=self.elements, labels=self.labels, fig=fig)
@@ -92,6 +93,8 @@ class WaveletPlotWindow(QDialog):
         filename, ok = QFileDialog.getSaveFileName(self, _('Save file'),
                                                    self.open_folder_path,
                                                    filter=save_file_filter)
+
+        self.open_folder_path = os.path.dirname(filename)
 
         if ok:
             res = {'time': self.time}
@@ -122,7 +125,9 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.dataView.setSelectionMode(QAbstractItemView.ContiguousSelection)
         self.dataView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\volkswagen_grant\B phi')
+        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\knit\data')
+        self.open_file_name = None
+
     def open_data(self):
         open_file_filter = 'Text files (*.txt *.asc *.dat *.csv *.cef);;All files (*.*)'
 
