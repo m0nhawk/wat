@@ -2,10 +2,11 @@ import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import matplotlib.ticker as ticker
 import numpy as np
-import pandas as pd
 import scipy.interpolate
 import scipy.ndimage
 import wavelets
+
+import helpers
 
 
 def cyclotron_frequency(magnetic_field, charge=1, element=1):
@@ -102,10 +103,7 @@ def wavelet(time, field, elements=None, fig=None, sign=None, wl_params=None):
     grid.update(wspace=0.0, hspace=0.0)
     ax_magnetic = fig.add_subplot(grid[0])
 
-    def date_formatter(x, pos):
-        return pd.to_datetime(x, unit='s').strftime('%H:%M:%S')
-
-    formatter = ticker.FuncFormatter(date_formatter)
+    formatter = ticker.FuncFormatter(helpers.date_formatter)
 
     ax_magnetic.plot(t, field)
 
