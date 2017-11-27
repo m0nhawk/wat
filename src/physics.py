@@ -83,7 +83,7 @@ class Wavelet:
         return cyclotron_period, cyclotron_power, integral
 
 
-def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
+def wavelet_plot(time, field, elements=None, labels=None, wl_params=None, fig=None):
     time = time.apply(lambda x: x.tz_localize('utc').timestamp()).values
 
     wat = Wavelet(time, field)
