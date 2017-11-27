@@ -14,7 +14,7 @@ from pandas.plotting import _converter
 import helpers
 import ui_main
 from models import PandasModel
-from physics import wavelet
+from physics import wavelet_plot
 
 localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locale')
 translate = gettext.translation('wat', localedir, fallback=True)
@@ -84,8 +84,8 @@ class WaveletPlotWindow(QDialog):
 
         fig = self._plot.getFigure()
 
-        self.cyclotron_power, self.integral = wavelet(self.time, self.field, elements=self.elements, labels=self.labels,
-                                                      fig=fig)
+        self.cyclotron_power, self.integral = wavelet_plot(self.time, self.field, elements=self.elements, labels=self.labels,
+                                                           fig=fig)
 
         self.integral_value.setText(str(self.integral))
 

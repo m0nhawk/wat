@@ -25,15 +25,13 @@ class Wavelet:
         self.wa = None
 
     def perform_wavelet_analysis(self):
-        t0 = self.t[0]
         same_dx = np.all(np.diff(self.t))
 
         if not same_dx:
             return
 
         dt = np.mean(np.diff(self.t))
-        self.wa = wavelets.WaveletAnalysis(time=self.t, data=self.y, dt=dt, dj=0.125, wavelet=wavelets.Morlet(),
-                                           unbias=True)
+        self.wa = wavelets.WaveletAnalysis(time=self.t, data=self.y, dt=dt, wavelet=wavelets.Morlet(), unbias=True)
 
         return self.wa
 
@@ -129,10 +127,6 @@ def wavelet(time, field, elements=None, labels=None, wl_params=None, fig=None):
 
     vmin = power.min() if wl_params is None or 'vmin' not in wl_params else wl_params['vmin']
     vmax = power.max() if wl_params is None or 'vmax' not in wl_params else wl_params['vmax']
-
-    def find_nearest_idx(array, value):
-        idx = (np.abs(array - value)).argmin()
-        return idx
 
     c_period = {}
     integral = 0
