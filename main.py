@@ -21,6 +21,7 @@ def my_exception_hook(exctype, value, traceback):
 sys.excepthook = my_exception_hook
 
 if __name__ == '__main__':
+    # QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
     app = QApplication(sys.argv)
     form = WaveletAnalysisApp()
     form.show()
