@@ -24,3 +24,7 @@ def date_formatter(x, _):
     :return: String, with datetime in 'HH:MM:SS' format
     """
     return pd.to_datetime(x, unit='s').strftime('%H:%M:%S')
+
+
+def get_from_dict(d, key, value):
+    return d[key] if (d is not None) and (key in d) else value
