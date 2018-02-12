@@ -14,7 +14,7 @@ from pandas.plotting import _converter
 import helpers
 import ui_main
 from models import PandasModel
-from physics import wavelet_plot
+from physics import WaveletPlot
 
 localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locale')
 translate = gettext.translation('wat', localedir, fallback=True)
@@ -58,7 +58,10 @@ class WaveletPlotWindow(QDialog):
     def __init__(self, time, field, date_format=None, elements=None, labels=None, parent=None):
         super(WaveletPlotWindow, self).__init__(parent)
 
-        self.resize(900, 900)
+        import matplotlib
+        matplotlib.rcParams.update({'font.size': 16})
+
+        self.resize(1000, 1000)
 
         self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setObjectName('verticalLayout')
@@ -84,8 +87,8 @@ class WaveletPlotWindow(QDialog):
 
         fig = self._plot.getFigure()
 
-        self.cyclotron_power, self.integral = wavelet_plot(self.time, self.field, elements=self.elements, labels=self.labels,
-                                                           fig=fig)
+        wp = WaveletPlot(self.time, self.field, elements=self.elements)
+        self.cyclotron_power, self.integral = wp.plot(labels=self.labels, fig=fig)
 
         self.integral_value.setText(str(self.integral))
 
@@ -218,8 +221,12 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         field = self.data.loc[begin:end][field_axis]
         date_format = self.dateFormat.currentText()
         labels = {'title': _('Wavelet Analysis'),
-                  'xlabel': _('time, H:M:S'),
-                  'ylabel': _('|B|, nT')}
+                  'xlabel': _('Час, ГГ:ХХ:СС'),
+                  'ylabel': _('|B|, нТ'),
+                  'power': _('Power, (nT)^2'),
+                  'scale': _('Масштаб, с'),
+                  'frequency': _('Частота, Гц'),
+                  'cyclotron_title': _('Power on cyclotron frequency')}
 
         plt = WaveletPlotWindow(time, field, date_format=date_format, elements=elements_dict, labels=labels,
                                 parent=self)

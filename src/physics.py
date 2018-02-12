@@ -6,7 +6,7 @@ import scipy.interpolate
 import scipy.ndimage
 import wavelets
 
-import helpers
+from helpers import date_formatter, get_from_dict
 
 
 def cyclotron_frequency(magnetic_field, charge=1, element=1):
@@ -83,126 +83,133 @@ class Wavelet:
         return cyclotron_period, cyclotron_power, integral
 
 
-def wavelet_plot(time, field, elements=None, labels=None, wl_params=None, fig=None):
-    time = time.apply(lambda x: x.tz_localize('utc').timestamp()).values
+class WaveletPlot:
+    def __init__(self, time, field, elements=None):
+        self.time = time.apply(lambda x: x.tz_localize('utc').timestamp()).values
+        self.field = field
+        self.elements = elements
 
-    wat = Wavelet(time, field)
-    wa = wat.perform_wavelet_analysis()
-    t = wa.time
-    scales = wa.scales
-    power = wa.wavelet_power
+    def plot(self, labels=None, wl_params=None, fig=None):
+        wat = Wavelet(self.time, self.field)
+        wa = wat.perform_wavelet_analysis()
+        t = wa.time
+        scales = wa.scales
+        power = wa.wavelet_power
 
-    if elements:
-        heights_ratios = [1, 1, 4]
-    else:
-        heights_ratios = [1, 5]
-
-    height = len(heights_ratios)
-
-    grid = gridspec.GridSpec(height, 1, height_ratios=heights_ratios)
-    # grid.update(wspace=0.0, hspace=0.0)
-    ax_magnetic = fig.add_subplot(grid[0])
-
-    formatter = ticker.FuncFormatter(helpers.date_formatter)
-
-    ax_magnetic.plot(t, field)
-
-    ax_magnetic.set_title(labels['title'])
-
-    ax_magnetic.set_xlim(t[0], t[-1])
-    ax_magnetic.xaxis.set_major_formatter(formatter)
-
-    ax_magnetic.xaxis.set_visible(False)
-
-    ax_magnetic.set_ylabel(labels['ylabel'])
-    ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
-
-    ax_magnetic.grid(True)
-
-    C, S = wa.coi
-    S = np.insert(S, [0, S.size], [0, 0])
-
-    scales = np.array([s for s in scales if s < S.max()])
-    power = power[0:len(scales)]
-
-    vmin = power.min() if wl_params is None or 'vmin' not in wl_params else wl_params['vmin']
-    vmax = power.max() if wl_params is None or 'vmax' not in wl_params else wl_params['vmax']
-
-    c_period = {}
-    integral = 0
-
-    if elements:
-        ax_cyclotron = fig.add_subplot(grid[1], sharex=ax_magnetic)
-
-        for element in elements:
-            cyclotron_period, cyclotron_power, integral = wat.get_cyclotron_on(element=element)
-            c_period[element['name']] = cyclotron_period
-            ax_cyclotron.semilogy(t, cyclotron_power)
-
-        ax_cyclotron.set_title('Power on cyclotron frequency')
-
-        ax_cyclotron.set_xlabel(labels['xlabel'])
-        ax_cyclotron.set_xlim(t[0], t[-1])
-        ax_cyclotron.xaxis.set_major_locator(ticker.AutoLocator())
-        ax_cyclotron.xaxis.set_major_formatter(formatter)
-
-        ax_cyclotron.set_ylabel('Power, (nT)^2')
-        ax_cyclotron.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
-
-        ax_cyclotron.grid(True)
-
-    T, S = np.meshgrid(t, scales)
-
-    ax_wavelet = fig.add_subplot(grid[height - 1], sharex=ax_magnetic)
-    levels = np.linspace(vmin, vmax, 64, endpoint=True)
-    norm = colors.Normalize(vmin=vmin, vmax=vmax, clip=True)
-    s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
-
-    cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.1)
-    # cb.set_label('Wavelet power spectrum (nT)^2')
-    cb.set_label('Потужність, нТ^2')
-    cb.set_clim(vmin=vmin, vmax=vmax)
-
-    ax_wavelet.set_xlabel(labels['xlabel'])
-    ax_wavelet.set_xlim(t[0], t[-1])
-    ax_wavelet.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
-    ax_wavelet.xaxis.set_major_formatter(formatter)
-
-    scale_min = scales.min() if wl_params is None or 'smin' not in wl_params else wl_params['smin']
-    scale_max = scales.max() if wl_params is None or 'smax' not in wl_params else wl_params['smax']
-
-    # ax_wavelet.set_ylabel('Scale (s)')
-    ax_wavelet.set_ylabel('Масштаб, с')
-    ax_wavelet.set_ylim(scale_max, scale_min)
-    ax_wavelet.set_yscale('log', nonposy='clip')
-    ax_wavelet.set_yticks([10 ** n for n in range(0, 4)])
-    ax_wavelet.yaxis.set_major_formatter(ticker.ScalarFormatter())
-
-    C, S = wa.coi
-    C = np.insert(C, [0, C.size], [t.min(), t.max()])
-    S = np.insert(S, [0, S.size], [0, 0])
-
-    ax_wavelet.fill_between(x=C, y1=S, y2=scale_max, color='gray', alpha=0.3)
-
-    if c_period:
-        if len(c_period) == 1:
-            (_, value), = c_period.items()
-            ax_wavelet.fill_between(t, 0.1 * value, 0.4 * value, color='r', alpha=0.5)
+        if self.elements:
+            heights_ratios = [1, 1, 4]
         else:
-            for key, value in c_period.items():
-                ax_wavelet.plot(t, value, '-', color='r', linewidth=1)
+            heights_ratios = [1, 5]
 
-    ax_wavelet.grid(b=True, which='major', color='k', linestyle='-', alpha=.2, zorder=3)
+        height = len(heights_ratios)
 
-    ax_wavelet_fourier = ax_wavelet.twinx()
+        grid = gridspec.GridSpec(height, 1, height_ratios=heights_ratios)
 
-    # ax_wavelet_fourier.set_ylabel('Frequency (Hz)')
-    ax_wavelet_fourier.set_ylabel('Частота, Гц')
-    fourier_lim = [1 / wa.fourier_period(i) for i in ax_wavelet.get_ylim()]
-    ax_wavelet_fourier.set_ylim(fourier_lim)
-    ax_wavelet_fourier.set_yscale('log')
-    ax_wavelet_fourier.set_yticks([10 ** (-n) for n in range(3)])
+        if self.elements:
+            grid.update(wspace=0.0, hspace=0.0)
+        ax_magnetic = fig.add_subplot(grid[0])
 
-    fig.set_tight_layout(True)
+        formatter = ticker.FuncFormatter(date_formatter)
 
-    return c_period, integral
+        ax_magnetic.plot(t, self.field, color='k')
+
+        # ax_magnetic.set_title(labels['title'])
+
+        ax_magnetic.set_xlim(t[0], t[-1])
+        ax_magnetic.xaxis.set_major_formatter(formatter)
+
+        ax_magnetic.xaxis.set_visible(False)
+
+        ax_magnetic.set_ylabel(labels['ylabel'])
+        ax_magnetic.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
+        ax_magnetic.grid(b=True, which='major', color='k', linestyle='dotted', alpha=.2, zorder=3)
+
+        C, S = wa.coi
+        S = np.insert(S, [0, S.size], [0, 0])
+
+        scales = np.array([s for s in scales if s < S.max()])
+        power = power[0:len(scales)]
+
+        power_min = get_from_dict(wl_params, 'power_min', power.min())
+        power_max = get_from_dict(wl_params, 'power_max', power.max())
+
+        c_period = {}
+        integral = 0
+
+        if self.elements:
+            ax_cyclotron = fig.add_subplot(grid[1], sharex=ax_magnetic)
+
+            for element in self.elements:
+                cyclotron_period, cyclotron_power, integral = wat.get_cyclotron_on(element=element)
+                c_period[element['name']] = cyclotron_period
+                ax_cyclotron.semilogy(t, cyclotron_power)
+
+            ax_cyclotron.set_title(labels['cyclotron_title'])
+
+            ax_cyclotron.set_xlabel(labels['xlabel'])
+            ax_cyclotron.set_xlim(t[0], t[-1])
+            ax_cyclotron.xaxis.set_major_locator(ticker.AutoLocator())
+            ax_cyclotron.xaxis.set_major_formatter(formatter)
+
+            ax_cyclotron.set_ylabel(labels['power'])
+            ax_cyclotron.yaxis.set_major_locator(ticker.LinearLocator(numticks=3))
+
+            ax_cyclotron.grid(True)
+
+        T, S = np.meshgrid(t, scales)
+
+        ax_wavelet = fig.add_subplot(grid[height - 1], sharex=ax_magnetic)
+        levels = np.linspace(power_min, power_max, 64, endpoint=True)
+        norm = colors.Normalize(vmin=power_min, vmax=power_max, clip=True)
+#        s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
+
+        levels = np.linspace(power_min, power_max, 8, endpoint=True)
+        s = ax_wavelet.contour(T, S, power, norm=norm, colors='k', extend='max')
+        # ax_wavelet.clabel(s, fontsize=4, inline=1)
+
+        # cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.1)
+        # cb.set_label(labels['power'])
+        # cb.set_clim(vmin=power_min, vmax=power_max)
+
+        ax_wavelet.set_xlabel(labels['xlabel'])
+        ax_wavelet.set_xlim(t[0], t[-1])
+        ax_wavelet.xaxis.set_major_locator(ticker.MaxNLocator(nbins=5))
+        ax_wavelet.xaxis.set_major_formatter(formatter)
+
+        scale_min = get_from_dict(wl_params, 'scale_min', scales.min())
+        scale_max = get_from_dict(wl_params, 'scale_max', scales.max())
+
+        ax_wavelet.set_ylabel(labels['scale'])
+        ax_wavelet.set_ylim(scale_max, scale_min)
+        ax_wavelet.set_yscale('log', nonposy='clip')
+        ax_wavelet.set_yticks([10 ** n for n in range(0, 4)])
+        ax_wavelet.yaxis.set_major_formatter(ticker.ScalarFormatter())
+
+        C, S = wa.coi
+        C = np.insert(C, [0, C.size], [t.min(), t.max()])
+        S = np.insert(S, [0, S.size], [0, 0])
+
+        ax_wavelet.fill_between(x=C, y1=S, y2=scale_max, hatch='X', facecolor='none', edgecolor='k')
+
+        if c_period:
+            if len(c_period) == 1:
+                (_, value), = c_period.items()
+                ax_wavelet.fill_between(t, 0.1 * value, 0.4 * value, color='r', alpha=0.5)
+            else:
+                for key, value in c_period.items():
+                    ax_wavelet.plot(t, value, '-', color='r', linewidth=1)
+
+        ax_wavelet.grid(b=True, which='major', color='k', linestyle='dotted', alpha=.2, zorder=3)
+
+        ax_wavelet_fourier = ax_wavelet.twinx()
+
+        ax_wavelet_fourier.set_ylabel(labels['frequency'])
+        fourier_lim = [1 / wa.fourier_period(i) for i in ax_wavelet.get_ylim()]
+        ax_wavelet_fourier.set_ylim(fourier_lim)
+        ax_wavelet_fourier.set_yscale('log')
+        ax_wavelet_fourier.set_yticks([10 ** (-n) for n in range(4)])
+
+        fig.set_tight_layout(True)
+
+        return c_period, integral
