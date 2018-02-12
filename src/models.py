@@ -23,7 +23,7 @@ class PandasModel(QtCore.QAbstractTableModel):
                 return str(self._data.iat[index.row(), index.column()])
         return None
 
-    def headerData(self, col, orientation, role):
+    def headerData(self, col, orientation, role=QtCore.Qt.DisplayRole):
         if orientation == QtCore.Qt.Horizontal and role == QtCore.Qt.DisplayRole:
             return self._data.columns[col]
         if orientation == QtCore.Qt.Vertical and role == QtCore.Qt.DisplayRole:
