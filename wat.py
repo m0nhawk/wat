@@ -9,25 +9,25 @@ import pyqtgraph as pg
 import pyqtgraph.widgets.MatplotlibWidget as mpw
 from PyQt5.QtWidgets import (QMainWindow, QFileDialog, QGridLayout, QAbstractItemView, QPushButton,
                              QDialog, QVBoxLayout, QLineEdit)
-from pandas.plotting import _converter
+# from pandas.plotting import _converter
 
-import helpers
+import src.helpers
 import ui_main
-from models import PandasModel
-from physics import WaveletPlot
+from src.models import PandasModel
+from src.physics import WaveletPlot
 
 localedir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'locale')
 translate = gettext.translation('wat', localedir, fallback=True)
 _ = translate.gettext
 
-_converter.register()
+# _converter.register()
 
 
 class FieldPlotWindow(QDialog):
     def __init__(self, time, field, date_format=None, labels=None, parent=None):
         super(FieldPlotWindow, self).__init__(parent)
 
-        self.time = helpers.get_formatted_time(time, date_format=date_format).values
+        self.time = src.helpers.get_formatted_time(time, date_format=date_format).values
         self.field = field.values
         self.labels = labels
 
@@ -77,7 +77,7 @@ class WaveletPlotWindow(QDialog):
         self._plot = pg.widgets.MatplotlibWidget.MatplotlibWidget(size=(7.0, 9.0))
         self.verticalLayout.addWidget(self._plot)
 
-        self.time = helpers.get_formatted_time(time, date_format=date_format)
+        self.time = src.helpers.get_formatted_time(time, date_format=date_format)
         self.field = field.values
         self.cyclotron_power = {}
         self.elements = elements
@@ -129,7 +129,7 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         self.dataView.setSelectionMode(QAbstractItemView.ContiguousSelection)
         self.dataView.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self.open_folder_path = os.path.expanduser(r'~\Documents\me\science\knit\data')
+        self.open_folder_path = os.path.expanduser(r'c:\Users\user\Nextcloud\science\archive\volkswagen_grant\jupiter\input')
         self.open_file_name = None
 
     def open_data(self):
@@ -168,8 +168,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
     def plot_data(self):
         data_range = self.range.text()
         if data_range:
-            begin = data_range.split(':')[0]
-            end = data_range.split(':')[1]
+            begin = int(data_range.split(':')[0])
+            end = int(data_range.split(':')[1])
         else:
             begin = 0
             end = self.data.shape[0]
@@ -177,9 +177,14 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         time_axis = self.listTime.currentText()
         field_axis = self.listData.currentText()
 
-        time = self.data.loc[begin:end][time_axis]
-        field = self.data.loc[begin:end][field_axis]
+        print(begin)
+        print(end)
+        print(type(self.data[time_axis]))
+
+        time = self.data[time_axis].loc[begin:end]
+        field = self.data[field_axis].loc[begin:end]
         date_format = self.dateFormat.currentText()
+        print(time)
         labels = {'xlabel': time_axis, 'ylabel': field_axis}
 
         plt = FieldPlotWindow(time, field, date_format=date_format, labels=labels, parent=self)
@@ -188,8 +193,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
     def plot_wavelet(self):
         data_range = self.range.text()
         if data_range:
-            begin = data_range.split(':')[0]
-            end = data_range.split(':')[1]
+            begin = int(data_range.split(':')[0])
+            end = int(data_range.split(':')[1])
         else:
             begin = 0
             end = self.data.shape[0]
@@ -217,8 +222,8 @@ class WaveletAnalysisApp(QMainWindow, ui_main.Ui_MainWindow):
         time_axis = self.listTime.currentText()
         field_axis = self.listData.currentText()
 
-        time = self.data.loc[begin:end][time_axis]
-        field = self.data.loc[begin:end][field_axis]
+        time = self.data[time_axis].loc[begin:end]
+        field = self.data[field_axis].loc[begin:end]
         date_format = self.dateFormat.currentText()
         labels = {'title': _('Wavelet Analysis'),
                   'xlabel': _('Час, ГГ:ХХ:СС'),

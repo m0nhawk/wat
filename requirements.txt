@@ -1,7 +1,7 @@
-numpy
+numpy==1.19.3
 scipy
 pandas
 matplotlib
 pyqtgraph
-pyqt
-wavelets
+pyqt5
+-e git://github.com/aaren/wavelets.git#egg=wavelet

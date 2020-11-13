@@ -6,7 +6,7 @@ import scipy.interpolate
 import scipy.ndimage
 import wavelets
 
-from helpers import date_formatter, get_from_dict
+from src.helpers import date_formatter, get_from_dict
 
 
 def cyclotron_frequency(magnetic_field, charge=1, element=1):
@@ -162,15 +162,15 @@ class WaveletPlot:
         ax_wavelet = fig.add_subplot(grid[height - 1], sharex=ax_magnetic)
         levels = np.linspace(power_min, power_max, 64, endpoint=True)
         norm = colors.Normalize(vmin=power_min, vmax=power_max, clip=True)
-#        s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
+        s = ax_wavelet.contourf(T, S, power, levels, norm=norm, cmap='coolwarm', extend='max')
 
         levels = np.linspace(power_min, power_max, 8, endpoint=True)
         s = ax_wavelet.contour(T, S, power, norm=norm, colors='k', extend='max')
-        # ax_wavelet.clabel(s, fontsize=4, inline=1)
+        ax_wavelet.clabel(s, fontsize=4, inline=1)
 
-        # cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.1)
-        # cb.set_label(labels['power'])
-        # cb.set_clim(vmin=power_min, vmax=power_max)
+        cb = fig.colorbar(s, ax=ax_wavelet, orientation='horizontal', pad=0.1)
+        cb.set_label(labels['power'])
+        cb.mappable.set_clim(vmin=power_min, vmax=power_max)
 
         ax_wavelet.set_xlabel(labels['xlabel'])
         ax_wavelet.set_xlim(t[0], t[-1])
